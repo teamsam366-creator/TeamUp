@@ -113,9 +113,7 @@ const todayUTC=()=> new Date().toISOString().slice(0,10);
 // ── المستخدم الحالي من Firebase Auth ──
 let firebaseUser = null; // يُحدَّث من onAuthStateChanged
 
-const seedUsers=[
-  {id:'1vtfAy3ck2hUwhEVJmAwrbgqFY43',role:'user',name:'Test User',email:'test@teamup.com',binanceId:''}
-];
+const seedUsers=[];
 const seedAccounts=[
   {id:'acc1',number:'115',anydeskId:'1694677729',anydeskPass:'Pegasus123!!',project:'aether',accountRate:15.5,maxHours:10,assignedName:'Sara',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
   {id:'acc2',number:'116',anydeskId:'9876543210',anydeskPass:'Dragon99!!',project:'aether',accountRate:17.5,maxHours:12,assignedName:'asmaa',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
