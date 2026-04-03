@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,16 +140,19 @@ let state={
   modal: null
 };
 
-// ── حفظ البيانات في Firebase ──
+// ── حفظ البيانات في Firebase (مع تنظيف undefined) ──
+function sanitize(obj){
+  return JSON.parse(JSON.stringify(obj, (k,v)=> v===undefined ? null : v));
+}
 function persist(){
-  STATE_REF.set({
+  STATE_REF.set(sanitize({
     users: state.users,
     accounts: state.accounts,
     tasks: state.tasks,
     sessions: state.sessions,
     settings: state.settings,
     paymentRecords: state.paymentRecords
-  }).catch(e => console.error('Firebase save error:', e));
+  })).catch(e => console.error("Firebase save error:", e));
 }
 
 function normalizeVisibilityRules(){
