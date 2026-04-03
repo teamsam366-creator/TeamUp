@@ -199,9 +199,18 @@ function currentUser(){
   if(ADMIN_UIDS.has(uid)){
     return {id:uid, role:'admin', name:displayName, email:email};
   }
-  const dbUser = state.users.find(u=>u.id===uid || u.email===email);
-  if(dbUser) return dbUser;
-  return {id:uid, role:'user', name:displayName, email:email};
+  // ابحث عن اليوزر في قاعدة البيانات
+  let dbUser = state.users.find(u=>u.id===uid || u.email===email);
+  if(dbUser){
+    // تأكد إن الـ id صح
+    if(dbUser.id !== uid){ dbUser.id = uid; persist(); }
+    return dbUser;
+  }
+  // يوزر جديد من Firebase — أضفه تلقائياً
+  const newUser = {id:uid, role:'user', name:displayName, email:email, binanceId:''};
+  state.users.push(newUser);
+  persist();
+  return newUser;
 }
 function accountByLabel(lbl){return state.accounts.find(a=>`Account ${a.number}`===lbl)}
 function visibleAccountsFor(user){
@@ -371,7 +380,7 @@ function adminAccountsView(){
   return `<div class="row mb12"><button class="btn btn-green" data-action="new-account">+ Add Account</button></div><div class="grid grid-3">${state.accounts.map(acc=>{ const used=state.tasks.filter(t=>t.account===`Account ${acc.number}` && t.workDate===todayUTC()).reduce((s,t)=>s+parseDuration(t.duration),0)/3600; return `<div class="card account-card"><div class="account-top"><div><div class="account-name">🖥️ Account ${esc(acc.number)}</div><div class="muted">${esc(acc.project||'No project assigned')}</div></div><span class="badge ${acc.accountStatus==='paused'?'b-yellow':'b-blue'}">${acc.accountStatus==='paused'?'Stopped':'Working'}</span></div><div class="info-box mb12"><div class="kv"><span class="muted">ID:</span><span class="mono">${esc(acc.anydeskId)}</span></div><div class="kv"><span class="muted">🔑:</span><span class="mono">${esc(acc.anydeskPass)}</span></div></div><div class="row mb12"><span class="muted">💰 $${acc.accountRate}/hr</span><span class="muted">🕒 Daily limit ${acc.maxHours}h</span></div><div class="info-box mb12"><div class="kv"><strong>Today limit</strong><span class="mono">${used.toFixed(2)}h / ${(acc.maxHours||10).toFixed(2)}h</span></div><div class="progress"><div class="bar" style="width:${Math.min(100,(used/(acc.maxHours||10))*100)}%"></div></div></div>${acc.adminNotes?`<div class="info-box mb12"><div class="label">Admin Notes</div><div>${esc(acc.adminNotes)}</div></div>`:''}<div class="row"><button class="btn btn-soft" data-action="edit-account" data-id="${acc.id}">Edit</button><button class="btn ${acc.accountStatus==='paused'?'btn-green':'btn-yellow'}" data-action="toggle-account-status" data-id="${acc.id}">${acc.accountStatus==='paused'?'Start':'Stop'}</button><button class="btn btn-red" data-action="delete-account" data-id="${acc.id}">Delete</button></div></div>`;}).join('')}</div>`;
 }
 function adminUsersView(){
-  return `<div class="row mb12"><button class="btn btn-green" data-action="new-user">+ Add User</button></div><div class="card table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Binance ID</th><th>Action</th></tr></thead><tbody>${state.users.map(u=>`<tr><td><strong>${esc(u.name)}</strong></td><td>${esc(u.email)}</td><td class="mono">${esc(u.password)}</td><td class="mono">${esc(u.binanceId||'—')}</td><td><button class="btn btn-soft" data-action="edit-user" data-id="${u.id}">Edit</button></td></tr>`).join('')||`<tr><td colspan="5" class="empty">No users</td></tr>`}</tbody></table></div>`;
+  return `<div class="card table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Binance ID</th><th>Action</th></tr></thead><tbody>${state.users.map(u=>`<tr><td><strong>${esc(u.name)}</strong></td><td>${esc(u.email)}</td><td class="mono">${esc(u.password)}</td><td class="mono">${esc(u.binanceId||'—')}</td><td><button class="btn btn-soft" data-action="edit-user" data-id="${u.id}">Edit</button></td></tr>`).join('')||`<tr><td colspan="5" class="empty">No users</td></tr>`}</tbody></table></div>`;
 }
 function openModal(title,bodyHtml,onBind){
   const wrap=document.createElement('div'); wrap.className='modal-bg'; wrap.innerHTML=`<div class="modal"><div class="row mb16"><div class="section-title">${title}</div><button class="btn btn-soft right" id="closeModal">Close</button></div>${bodyHtml}</div>`; document.body.appendChild(wrap); $('#closeModal').onclick=()=>wrap.remove(); wrap.addEventListener('click',e=>{if(e.target===wrap)wrap.remove()}); if(onBind) onBind(wrap);
