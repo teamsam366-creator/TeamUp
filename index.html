@@ -9,6 +9,7 @@
 <!-- ✅ Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{
@@ -93,7 +94,15 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 const STATE_REF = db.collection('teamApp').doc('state');
+
+// ── UIDs الأدمن الحقيقيين من Firebase Authentication ──
+const ADMIN_UIDS = new Set([
+  'evTQJpWDdxYkhAdiZausCnbnZb62', // sara@teamup.com
+  'dy5JRtY4A3dYmG1tol3OkPQDSDT2', // asmaa@teamup.com
+  'YMN7sIbVbJZXKIwOH903Yd2ndTU2'  // mustafa@teamup.com
+]);
 
 (function(){
 const $=s=>document.querySelector(s);
@@ -101,20 +110,11 @@ const uid=()=> 'id_'+Math.random().toString(36).slice(2,10);
 const nowISO=()=> new Date().toISOString();
 const todayUTC=()=> new Date().toISOString().slice(0,10);
 
-// ── Session لا تزال في localStorage (خاصة بكل متصفح) ──
-const STORE='team_v6_';
-const loadSession=()=>{try{return JSON.parse(localStorage.getItem(STORE+'session'))||JSON.parse(sessionStorage.getItem(STORE+'session'))}catch{return null}};
-const saveSession=(v,remember)=>{ if(remember){localStorage.setItem(STORE+'session',JSON.stringify(v)); sessionStorage.removeItem(STORE+'session');} else {sessionStorage.setItem(STORE+'session',JSON.stringify(v)); localStorage.removeItem(STORE+'session');} };
-const clearSession=()=>{localStorage.removeItem(STORE+'session'); sessionStorage.removeItem(STORE+'session');};
+// ── المستخدم الحالي من Firebase Auth ──
+let firebaseUser = null; // يُحدَّث من onAuthStateChanged
 
-const ADMINS=[
-  {id:'admin-1',role:'admin',name:'Sara',email:'sara@team.local',password:'admin123'},
-  {id:'admin-2',role:'admin',name:'Asmaa',email:'asmaa@team.local',password:'admin123'},
-  {id:'admin-3',role:'admin',name:'Mustafa',email:'mustafa@team.local',password:'admin123'}
-];
 const seedUsers=[
-  {id:'u1',role:'user',name:'Sara',email:'sara.user@team.local',password:'123456',binanceId:'12345'},
-  {id:'u2',role:'user',name:'asmaa',email:'asmaa.user@team.local',password:'123456',binanceId:''}
+  {id:'1vtfAy3ck2hUwhEVJmAwrbgqFY43',role:'user',name:'Test User',email:'test@teamup.com',binanceId:''}
 ];
 const seedAccounts=[
   {id:'acc1',number:'115',anydeskId:'1694677729',anydeskPass:'Pegasus123!!',project:'aether',accountRate:15.5,maxHours:10,assignedName:'Sara',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
@@ -192,7 +192,18 @@ function fmtDuration(sec){ sec=Math.max(0, Math.floor(sec||0)); const h=Math.flo
 function fmtDurationFromInput(v){ return fmtDuration(parseDuration(v)); }
 function taskEarn(task,rate){return (parseDuration(task.duration)/3600*rate)}
 function within(d,from,to){return (!from||d>=from)&&(!to||d<=to)}
-function currentUser(){ if(!state.session) return null; return [...ADMINS, ...state.users].find(x=>x.id===state.session.id)||null; }
+function currentUser(){
+  if(!firebaseUser) return null;
+  const uid = firebaseUser.uid;
+  const email = firebaseUser.email||'';
+  const displayName = firebaseUser.displayName || email.split('@')[0];
+  if(ADMIN_UIDS.has(uid)){
+    return {id:uid, role:'admin', name:displayName, email:email};
+  }
+  const dbUser = state.users.find(u=>u.id===uid || u.email===email);
+  if(dbUser) return dbUser;
+  return {id:uid, role:'user', name:displayName, email:email};
+}
 function accountByLabel(lbl){return state.accounts.find(a=>`Account ${a.number}`===lbl)}
 function visibleAccountsFor(user){
   const uid=String(user.id||'').toLowerCase();
@@ -227,16 +238,18 @@ function shell(content,user){
   return `<div class="header"><div class="brand">Team</div><div class="row">${user?`<span class="badge b-blue">${esc(user.name)}</span>`:''}<button class="btn btn-soft" data-action="logout">Sign Out</button></div></div>${content}`;
 }
 function loginView(err=''){
-  $('#app').innerHTML=`<div class="login-wrap"><div class="card login-card"><div class="brand mb20" style="text-align:center">Team</div>${err?`<div class="notice">${esc(err)}</div>`:''}<div class="field mb12"><label class="label">Email</label><input id="loginEmail" class="input" placeholder="email" value="${esc(state.settings.rememberedEmail||'')}"></div><div class="field mb12"><label class="label">Password</label><input id="loginPass" type="password" class="input" placeholder="password" value="${esc(state.settings.rememberedPassword||'')}"></div><label class="check-row mb16"><input id="rememberLogin" type="checkbox" ${state.settings.rememberLogin?'checked':''}> <span>Keep my login data</span></label><button class="btn btn-primary" id="doLogin" style="width:100%">Sign In</button><div class="small mt16">Admins: sara@team.local / asmaa@team.local / mustafa@team.local<br>Password: admin123</div></div></div>`;
-  $('#doLogin').onclick=()=>{
-    const email=$('#loginEmail').value.trim().toLowerCase(), password=$('#loginPass').value.trim(), remember=$('#rememberLogin').checked;
-    const u=[...ADMINS,...state.users].find(x=>x.email.toLowerCase()===email && x.password===password);
-    if(!u) return loginView('Invalid email or password');
-    state.settings.rememberLogin=remember;
-    state.settings.rememberedEmail=remember?email:'';
-    state.settings.rememberedPassword=remember?password:'';
-    state.session={id:u.id}; persist(); saveSession(state.session, remember); render();
+  $('#app').innerHTML=`<div class="login-wrap"><div class="card login-card"><div class="brand mb20" style="text-align:center">Team</div>${err?`<div class="notice">${esc(err)}</div>`:''}<div class="field mb12"><label class="label">Email</label><input id="loginEmail" class="input" placeholder="email" type="email"></div><div class="field mb12"><label class="label">Password</label><input id="loginPass" type="password" class="input" placeholder="password"></div><button class="btn btn-primary" id="doLogin" style="width:100%;margin-top:8px">Sign In</button></div></div>`;
+  $('#doLogin').onclick=async()=>{
+    const email=$('#loginEmail').value.trim(), password=$('#loginPass').value.trim();
+    if(!email||!password) return loginView('Please enter email and password');
+    $('#doLogin').textContent='...'; $('#doLogin').disabled=true;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch(e) {
+      loginView('Invalid email or password');
+    }
   };
+  $('#loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#doLogin').click(); });
 }
 function statCard(v,l,cls=''){return `<div class="stat ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`;}
 function render(){
@@ -443,7 +456,7 @@ function openUserModal(user){
 function bindCommon(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.routeTab=b.dataset.tab; render();});
   document.querySelectorAll('[data-admin-tab]').forEach(b=>b.onclick=()=>{state.adminTab=b.dataset.adminTab; render();});
-  document.querySelector('[data-action="logout"]')?.addEventListener('click',()=>{state.session=null; clearSession(); render();});
+  document.querySelector('[data-action="logout"]')?.addEventListener('click',()=>{ auth.signOut(); });
   document.querySelectorAll('[data-action="login-account"]').forEach(b=>b.onclick=()=>{const user=currentUser(); const acc=state.accounts.find(a=>a.id===b.dataset.id); if(!user||!acc) return; if(acc.accountStatus==='paused') return; if(activeSessionFor(acc.id)) return; state.sessions=state.sessions.filter(s=>!(s.userId===user.id&&s.active)); state.sessions.push({id:uid(),accountId:acc.id,userId:user.id,userName:user.name,loginAt:nowISO(),active:true}); render();});
   document.querySelectorAll('[data-action="logout-account"]').forEach(b=>b.onclick=()=>{state.sessions=state.sessions.map(s=>s.accountId===b.dataset.id&&s.active?Object.assign({},s,{active:false,logoutAt:nowISO()}):s); render();});
   document.querySelectorAll('[data-action="new-task"]').forEach(b=>{
@@ -461,8 +474,8 @@ function bindCommon(){
   document.querySelectorAll('.payment-select').forEach(sel=>sel.addEventListener('change',()=>{ const f=state.billingFilter; const userId=sel.dataset.userId; if(!userId||!f?.from||!f?.to) return; const existing=paymentRecordFor(userId,f.from,f.to); if(sel.value==='paid'){ if(!existing){ const user=state.users.find(u=>u.id===userId)||{}; state.paymentRecords.push({id:uid(),userId:userId,userName:user.name||'',from:f.from,to:f.to,paidAt:nowISO()}); } } else { state.paymentRecords=state.paymentRecords.filter(r=>!(r.userId===userId && r.from===f.from && r.to===f.to)); } render(); }));
 }
 
-// ── تهيئة Firebase وتحميل البيانات ──
-async function initApp() {
+// ── تهيئة Firebase Auth + Firestore ──
+async function loadData() {
   try {
     const doc = await STATE_REF.get();
     if (doc.exists) {
@@ -474,35 +487,22 @@ async function initApp() {
       state.settings        = data.settings        || state.settings;
       state.paymentRecords  = data.paymentRecords  || [];
     } else {
-      // أول مرة تشغيل — احفظ البيانات الأولية
-      await STATE_REF.set({
+      await STATE_REF.set(sanitize({
         users: state.users,
         accounts: state.accounts,
         tasks: state.tasks,
         sessions: state.sessions,
         settings: state.settings,
         paymentRecords: state.paymentRecords
-      });
+      }));
     }
   } catch(e) {
-    console.error('Firebase init error:', e);
-    document.getElementById('app').innerHTML = `
-      <div class="error-screen">
-        <div class="error-box">
-          <div style="font-size:32px;margin-bottom:12px">⚠️</div>
-          <div style="font-size:18px;font-weight:800;margin-bottom:8px">خطأ في الاتصال بـ Firebase</div>
-          <div style="font-size:14px;color:#6f86a1">تأكد من أنك استبدلت إعدادات Firebase في الكود بإعداداتك الحقيقية</div>
-          <div style="font-size:12px;margin-top:12px;color:#aaa">${e.message}</div>
-        </div>
-      </div>`;
-    return;
+    console.error('Firebase data error:', e);
   }
 
   normalizeVisibilityRules();
 
-  // ✅ مستمع real-time — يُحدّث الواجهة فوراً عند أي تغيير من أي مستخدم
   STATE_REF.onSnapshot({ includeMetadataChanges: true }, (doc) => {
-    // تجاهل التحديثات التي أرسلناها نحن (pending writes)
     if (doc.metadata.hasPendingWrites) return;
     if (!doc.exists) return;
     const data = doc.data();
@@ -513,13 +513,20 @@ async function initApp() {
     state.settings       = data.settings       ?? state.settings;
     state.paymentRecords = data.paymentRecords ?? state.paymentRecords;
     normalizeVisibilityRules();
-    render();
+    if(firebaseUser) render();
   });
-
-  render();
 }
 
-initApp();
+// ✅ Firebase Auth — المدير الرئيسي للدخول والخروج
+auth.onAuthStateChanged(async (user) => {
+  firebaseUser = user;
+  if (user) {
+    await loadData();
+    render();
+  } else {
+    loginView();
+  }
+});
 })();
 </script>
 </body>
