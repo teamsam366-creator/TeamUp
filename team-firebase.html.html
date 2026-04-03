@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team</title>
+
+<!-- ✅ Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --bg1:#f7fbff;--bg2:#eef6ff;--card:#ffffff;--line:#dbe5f1;--text:#17324d;--muted:#6f86a1;
+  --blue:#4f8cff;--blue2:#eaf2ff;--green:#21a65b;--green2:#e9f8ef;--red:#dc4c64;--red2:#fff0f3;
+  --yellow:#c88a00;--yellow2:#fff8e5;--shadow:0 12px 30px rgba(58,91,141,.08);
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh}
+button,input,select,textarea{font:inherit}
+#app{max-width:1400px;margin:0 auto;padding:24px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.6);border-radius:22px;box-shadow:var(--shadow);position:sticky;top:12px;z-index:10}
+.brand{font-size:28px;font-weight:800;letter-spacing:.3px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.p16{padding:16px}.p20{padding:20px}.p24{padding:24px}
+.grid{display:grid;gap:16px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1000px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}.header{position:static}}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;background:#f7fbff;color:var(--muted)}
+.b-green{background:var(--green2);color:var(--green);border-color:#bde9cb}.b-red{background:var(--red2);color:var(--red);border-color:#f4bdc8}
+.b-yellow{background:var(--yellow2);color:var(--yellow);border-color:#f4dea0}.b-blue{background:var(--blue2);color:var(--blue);border-color:#bdd2ff}
+.btn{border:none;border-radius:14px;padding:12px 16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.2;min-height:48px;text-align:center}
+.btn-primary{background:var(--blue);color:#fff}.btn-soft{background:#fff;border:1px solid var(--line);color:var(--text)}
+.btn-green{background:var(--green2);color:var(--green);border:1px solid #bde9cb}.btn-red{background:var(--red2);color:var(--red);border:1px solid #f4bdc8}.btn-yellow{background:var(--yellow2);color:var(--yellow);border:1px solid #f4dea0}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tab{padding:10px 16px;border-radius:14px;background:#edf4ff;border:1px solid #d4e1f3;color:#5c7390;font-weight:700;cursor:pointer}.tab.active{background:#fff;color:var(--text);box-shadow:var(--shadow)}
+.stat{padding:18px;border-radius:20px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)} .stat .v{font-size:30px;font-weight:800}.stat .l{color:var(--muted);margin-top:6px;font-size:13px}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:separate;border-spacing:0}.table th,.table td{padding:14px 12px;border-bottom:1px solid #e7eef8;text-align:left;vertical-align:top}.table th{font-size:12px;color:#8497af;text-transform:uppercase;letter-spacing:.8px;background:#f8fbff}.table tr:hover td{background:#fbfdff}
+.input,.select,.textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fbfdff;color:var(--text);outline:none}.textarea{min-height:90px;resize:vertical}
+.label{display:block;font-size:12px;color:#7f92aa;font-weight:700;letter-spacing:.7px;text-transform:uppercase;margin:0 0 7px}
+.field{display:flex;flex-direction:column;gap:7px}
+.modal-bg{position:fixed;inset:0;background:rgba(16,33,56,.28);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}.modal{max-width:760px;width:100%;max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 22px 50px rgba(12,41,85,.18);padding:24px}
+.section-title{font-size:22px;font-weight:800;margin:0 0 14px}
+.small{font-size:12px;color:var(--muted)} .muted{color:var(--muted)} .mono{font-family:Consolas,monospace}
+.account-card{padding:22px}.account-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:14px}.account-name{font-size:18px;font-weight:800}
+.info-box{background:#f9fbff;border:1px solid var(--line);border-radius:18px;padding:14px}
+.progress{height:12px;background:#e7eef8;border-radius:999px;overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,#2ec866,#8add80)}
+.notice{padding:14px 18px;border-radius:18px;border:1px solid #f4dea0;background:#fff8e5;color:#9b6d00;margin-bottom:14px}
+.kv{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}.login-card{max-width:430px;width:100%;padding:28px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px)}.check-row{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.check-row input{width:18px;height:18px}
+.empty{padding:30px;color:var(--muted);text-align:center}
+.day-box{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff}
+.day-head{padding:12px 14px;background:#f8fbff;border-bottom:1px solid var(--line);font-weight:800}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.compact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.compact-account{padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
+.pill-stat{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fbff;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+.duration-boxes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.duration-boxes .mini{display:flex;align-items:center;gap:8px}
+.duration-boxes input{width:100%;text-align:center;font-size:24px;font-weight:800;padding:14px 8px;border-radius:16px;border:1px solid var(--line);background:#f8fbff;color:var(--text)}
+.duration-boxes span{font-weight:700;color:var(--muted)}
+.check-item{padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:#fbfdff}
+.right{margin-left:auto}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mt16{margin-top:16px}
+.loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--muted);font-size:16px}
+.spinner{width:40px;height:40px;border:4px solid #dbe5f1;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+.error-box{max-width:500px;background:#fff;border:1px solid #f4bdc8;border-radius:20px;padding:24px;color:#dc4c64}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <span>جاري الاتصال بقاعدة البيانات...</span>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║         🔥 إعدادات Firebase — استبدل هذه القيم             ║
+// ║  من: Firebase Console → Project Settings → Your apps        ║
+// ╚══════════════════════════════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey:            "AIzaSyCbk-Aega3pmyKL6E38irzvVxPxEApVxZM",
+  authDomain:        "teamup-5a2da.firebaseapp.com",
+  projectId:         "teamup-5a2da",
+  storageBucket:     "teamup-5a2da.firebasestorage.app",
+  messagingSenderId: "99379718294",
+  appId:             "1:99379718294:web:de2e9e1db0404c63537ab7"
+};
+// ══════════════════════════════════════════════════════════════
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const STATE_REF = db.collection('teamApp').doc('state');
+
+(function(){
+const $=s=>document.querySelector(s);
+const uid=()=> 'id_'+Math.random().toString(36).slice(2,10);
+const nowISO=()=> new Date().toISOString();
+const todayUTC=()=> new Date().toISOString().slice(0,10);
+
+// ── Session لا تزال في localStorage (خاصة بكل متصفح) ──
+const STORE='team_v6_';
+const loadSession=()=>{try{return JSON.parse(localStorage.getItem(STORE+'session'))||JSON.parse(sessionStorage.getItem(STORE+'session'))}catch{return null}};
+const saveSession=(v,remember)=>{ if(remember){localStorage.setItem(STORE+'session',JSON.stringify(v)); sessionStorage.removeItem(STORE+'session');} else {sessionStorage.setItem(STORE+'session',JSON.stringify(v)); localStorage.removeItem(STORE+'session');} };
+const clearSession=()=>{localStorage.removeItem(STORE+'session'); sessionStorage.removeItem(STORE+'session');};
+
+const ADMINS=[
+  {id:'admin-1',role:'admin',name:'Sara',email:'sara@team.local',password:'admin123'},
+  {id:'admin-2',role:'admin',name:'Asmaa',email:'asmaa@team.local',password:'admin123'},
+  {id:'admin-3',role:'admin',name:'Mustafa',email:'mustafa@team.local',password:'admin123'}
+];
+const seedUsers=[
+  {id:'u1',role:'user',name:'Sara',email:'sara.user@team.local',password:'123456',binanceId:'12345'},
+  {id:'u2',role:'user',name:'asmaa',email:'asmaa.user@team.local',password:'123456',binanceId:''}
+];
+const seedAccounts=[
+  {id:'acc1',number:'115',anydeskId:'1694677729',anydeskPass:'Pegasus123!!',project:'aether',accountRate:15.5,maxHours:10,assignedName:'Sara',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
+  {id:'acc2',number:'116',anydeskId:'9876543210',anydeskPass:'Dragon99!!',project:'aether',accountRate:17.5,maxHours:12,assignedName:'asmaa',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
+  {id:'acc3',number:'117',anydeskId:'1122334455',anydeskPass:'Eagle2024!',project:'',accountRate:12,maxHours:10,assignedName:'',accountStatus:'paused',adminNotes:'',visibleToUserIds:[]}
+];
+const seedTasks=[
+  {id:'t1',userId:'u1',userName:'Sara',workDate:'2026-03-25',platform:'outlier',duration:'1h 4m 7s',payType:'task',projectName:'aether',account:'Account 115',notes:'Text-to-Image Head-to-Head Evaluation',status:'reviewed',reviewNote:'',submittedAt:'2026-03-25T09:00:00Z'},
+  {id:'t2',userId:'u1',userName:'Sara',workDate:'2026-03-26',platform:'outlier',duration:'54m 25s',payType:'task',projectName:'aether',account:'Account 115',notes:'Text-to-Image Head-to-Head Evaluation',status:'reviewed',reviewNote:'',submittedAt:'2026-03-26T10:00:00Z'},
+  {id:'t3',userId:'u2',userName:'asmaa',workDate:'2026-03-30',platform:'outlier',duration:'2',payType:'task',projectName:'aether',account:'Account 115',notes:'ايثر',status:'revision',reviewNote:'ارجعي عدليه',submittedAt:'2026-03-30T02:17:00Z'}
+];
+
+let state={
+  users: seedUsers,
+  accounts: seedAccounts,
+  tasks: seedTasks,
+  sessions: [],
+  settings: {globalRate:6,rememberLogin:false,rememberedEmail:'',rememberedPassword:''},
+  paymentRecords: [],
+  session: loadSession(),
+  routeTab: 'accounts',
+  adminTab: 'tasks',
+  modal: null
+};
+
+// ── حفظ البيانات في Firebase ──
+function persist(){
+  STATE_REF.set({
+    users: state.users,
+    accounts: state.accounts,
+    tasks: state.tasks,
+    sessions: state.sessions,
+    settings: state.settings,
+    paymentRecords: state.paymentRecords
+  }).catch(e => console.error('Firebase save error:', e));
+}
+
+function normalizeVisibilityRules(){
+  state.accounts.forEach(a=>{
+    a.visibleToUserIds=Array.isArray(a.visibleToUserIds)?a.visibleToUserIds:[];
+    a.visibleToUserNames=Array.isArray(a.visibleToUserNames)?a.visibleToUserNames:[];
+    a.visibleToUserEmails=Array.isArray(a.visibleToUserEmails)?a.visibleToUserEmails:[];
+    if(a.visibleToUserIds.length && !a.visibleToUserNames.length){
+      a.visibleToUserNames=a.visibleToUserIds.map(id=>{ const u=state.users.find(x=>x.id===id); return u?u.name:id; });
+    }
+    if(a.visibleToUserIds.length && !a.visibleToUserEmails.length){
+      a.visibleToUserEmails=a.visibleToUserIds.map(id=>{ const u=state.users.find(x=>x.id===id); return u?u.email:''; }).filter(Boolean);
+    }
+    if(!a.visibleToUserIds.length && a.visibleToUsers && Array.isArray(a.visibleToUsers)){
+      a.visibleToUserNames=a.visibleToUsers.slice();
+    }
+  });
+}
+
+function fmtDate(s){if(!s)return '—'; const [y,m,d]=s.split('-'); return d+'/'+m+'/'+y;}
+function fmtUTC(s){if(!s)return '—'; const d=new Date(s); const dd=String(d.getUTCDate()).padStart(2,'0'); const mm=String(d.getUTCMonth()+1).padStart(2,'0'); const yyyy=d.getUTCFullYear(); const hh=String(d.getUTCHours()).padStart(2,'0'); const mi=String(d.getUTCMinutes()).padStart(2,'0'); return `${dd}/${mm}/${yyyy} ${hh}:${mi} UTC`;}
+function getWeekBounds(dateStr){const d=new Date(dateStr+'T00:00:00Z'); const dow=d.getUTCDay(); const diff=((dow-2)+7)%7; const s=new Date(d); s.setUTCDate(d.getUTCDate()-diff); const e=new Date(s); e.setUTCDate(s.getUTCDate()+6); return {start:s.toISOString().slice(0,10), end:e.toISOString().slice(0,10)};}
+function parseDuration(str){if(!str)return 0; str=(''+str).trim().toLowerCase(); let t=0; const h=str.match(/(\d+\.?\d*)\s*h/), m=str.match(/(\d+\.?\d*)\s*m/), s=str.match(/(\d+\.?\d*)\s*s/); if(h)t+=parseFloat(h[1])*3600; if(m)t+=parseFloat(m[1])*60; if(s)t+=parseFloat(s[1]); if(!h&&!m&&!s&&!isNaN(parseFloat(str)))t=parseFloat(str)*3600; return t;}
+function durationToParts(str){
+  const sec = parseDuration(str);
+  return {
+    h: Math.floor(sec / 3600),
+    m: Math.floor((sec % 3600) / 60),
+    s: Math.floor(sec % 60)
+  };
+}
+function partsToDuration(h, m, s){
+  return `${parseInt(h||0)}h ${parseInt(m||0)}m ${parseInt(s||0)}s`;
+}
+function secToH(sec){return (sec/3600).toFixed(2)}
+function fmtDuration(sec){ sec=Math.max(0, Math.floor(sec||0)); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`; }
+function fmtDurationFromInput(v){ return fmtDuration(parseDuration(v)); }
+function taskEarn(task,rate){return (parseDuration(task.duration)/3600*rate)}
+function within(d,from,to){return (!from||d>=from)&&(!to||d<=to)}
+function currentUser(){ if(!state.session) return null; return [...ADMINS, ...state.users].find(x=>x.id===state.session.id)||null; }
+function accountByLabel(lbl){return state.accounts.find(a=>`Account ${a.number}`===lbl)}
+function visibleAccountsFor(user){
+  const uid=String(user.id||'').toLowerCase();
+  const uname=String(user.name||'').trim().toLowerCase();
+  const uemail=String(user.email||'').trim().toLowerCase();
+  return state.accounts.filter(a=>{
+    const ids=(a.visibleToUserIds||[]).map(v=>String(v).toLowerCase());
+    const names=(a.visibleToUserNames||[]).map(v=>String(v).trim().toLowerCase());
+    const emails=(a.visibleToUserEmails||[]).map(v=>String(v).trim().toLowerCase());
+    const hasRules=ids.length>0||names.length>0||emails.length>0;
+    if(!hasRules) return false;
+    return ids.includes(uid)||names.includes(uname)||names.includes(uemail)||emails.includes(uemail);
+  });
+}
+function activeSessionFor(accId){return state.sessions.find(s=>s.accountId===accId && s.active);}
+function paidKey(from,to,userId){return `${from||'all'}_${to||'all'}_${userId||'all'}`}
+function purgeExpiredPayments(){
+  const now=Date.now();
+  const keep=[];
+  state.paymentRecords.forEach(r=>{
+    const ageDays=(now-new Date(r.paidAt).getTime())/86400000;
+    if(ageDays>30){
+      state.tasks=state.tasks.filter(t=>!(t.userId===r.userId && within(t.workDate,r.from,r.to)));
+    } else keep.push(r);
+  });
+  state.paymentRecords=keep;
+}
+function paymentRecordFor(userId, from, to){ return state.paymentRecords.find(r=>r.userId===userId && r.from===from && r.to===to) || null; }
+function isTaskPaid(task){ return !!state.paymentRecords.find(r=>r.userId===task.userId && within(task.workDate,r.from,r.to)); }
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function shell(content,user){
+  return `<div class="header"><div class="brand">Team</div><div class="row">${user?`<span class="badge b-blue">${esc(user.name)}</span>`:''}<button class="btn btn-soft" data-action="logout">Sign Out</button></div></div>${content}`;
+}
+function loginView(err=''){
+  $('#app').innerHTML=`<div class="login-wrap"><div class="card login-card"><div class="brand mb20" style="text-align:center">Team</div>${err?`<div class="notice">${esc(err)}</div>`:''}<div class="field mb12"><label class="label">Email</label><input id="loginEmail" class="input" placeholder="email" value="${esc(state.settings.rememberedEmail||'')}"></div><div class="field mb12"><label class="label">Password</label><input id="loginPass" type="password" class="input" placeholder="password" value="${esc(state.settings.rememberedPassword||'')}"></div><label class="check-row mb16"><input id="rememberLogin" type="checkbox" ${state.settings.rememberLogin?'checked':''}> <span>Keep my login data</span></label><button class="btn btn-primary" id="doLogin" style="width:100%">Sign In</button><div class="small mt16">Admins: sara@team.local / asmaa@team.local / mustafa@team.local<br>Password: admin123</div></div></div>`;
+  $('#doLogin').onclick=()=>{
+    const email=$('#loginEmail').value.trim().toLowerCase(), password=$('#loginPass').value.trim(), remember=$('#rememberLogin').checked;
+    const u=[...ADMINS,...state.users].find(x=>x.email.toLowerCase()===email && x.password===password);
+    if(!u) return loginView('Invalid email or password');
+    state.settings.rememberLogin=remember;
+    state.settings.rememberedEmail=remember?email:'';
+    state.settings.rememberedPassword=remember?password:'';
+    state.session={id:u.id}; persist(); saveSession(state.session, remember); render();
+  };
+}
+function statCard(v,l,cls=''){return `<div class="stat ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`;}
+function render(){
+  purgeExpiredPayments();
+  persist();
+  const user=currentUser();
+  if(!user) return loginView();
+  if(user.role==='admin') return renderAdmin(user);
+  return renderUser(user);
+}
+function renderUser(user){
+  const accounts=visibleAccountsFor(user);
+  const myTasks=state.tasks.filter(t=>t.userId===user.id && !isTaskPaid(t));
+  const needAttention=myTasks.filter(t=>t.status==='revision'||t.status==='rejected').length;
+  let content='';
+  if(needAttention) content+=`<div class="notice">⚠️ You have ${needAttention} task log(s) that need your attention.</div>`;
+  content+=`<div class="nav"><button class="tab ${state.routeTab==='accounts'?'active':''}" data-tab="accounts">Accounts</button><button class="tab ${state.routeTab==='tasks'?'active':''}" data-tab="tasks">Task Logs ${needAttention?`<span class="badge b-red">${needAttention}</span>`:''}</button></div>`;
+  if(state.routeTab==='accounts'){
+    content+=`<div class="grid grid-3">`+accounts.map(acc=>{
+      const sess=activeSessionFor(acc.id); const mine=sess&&sess.userId===user.id; const busy=sess&&!mine; const used=state.tasks.filter(t=>t.account===`Account ${acc.number}` && t.workDate===todayUTC()).reduce((s,t)=>s+parseDuration(t.duration),0); const usedH=+secToH(used); const pct=Math.min(100, (usedH/(acc.maxHours||10))*100);
+      return `<div class="card account-card"><div class="account-top"><div><div class="account-name">🖥️ Account ${esc(acc.number)}</div>${acc.project?`<div class="muted">${esc(acc.project)}</div>`:''}</div><span class="badge ${acc.accountStatus==='paused'?'b-yellow':mine?'b-green':busy?'b-red':'b-blue'}">${acc.accountStatus==='paused'?'Stopped':mine?'Connected':busy?'In Use':'Available'}</span></div><div class="info-box mb12"><div class="kv"><span class="muted">ID:</span><span class="mono">${esc(acc.anydeskId)}</span></div><div class="kv"><span class="muted">🔑:</span><span class="mono">${esc(acc.anydeskPass)}</span></div></div><div class="info-box mb12"><div class="kv"><strong>Today limit</strong><span class="mono">${usedH.toFixed(2)}h / ${(acc.maxHours||10).toFixed(2)}h</span></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div></div>${mine?`<button class="btn btn-red" style="width:100%" data-action="logout-account" data-id="${acc.id}">Logout</button>`:`<button class="btn btn-primary" style="width:100%" data-action="login-account" data-id="${acc.id}" ${busy||acc.accountStatus==='paused'?'disabled':''}>${acc.accountStatus==='paused'?'Stopped':busy?'Unavailable':'Login'}</button>`}</div>`;
+    }).join('')+`</div>`;
+  } else {
+    content+=`<div class="row mb12" style="justify-content:flex-end"><button type="button" id="userAddTaskBtn" class="btn btn-green" data-action="new-task">+ AAD New Task</button></div><div class="card p0 table-wrap"><table class="table"><thead><tr><th>Work Date (UTC)</th><th>Platform</th><th>Duration</th><th>Rate $</th><th>Account</th><th>Notes</th><th>Project</th><th>Review Note</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+    if(!myTasks.length) content+=`<tr><td colspan="10" class="empty">No task logs yet</td></tr>`;
+    myTasks.sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt)).forEach(t=>{
+      const editable=t.status==='revision'||t.status==='rejected';
+      content+=`<tr><td><strong>${fmtDate(t.workDate)}</strong><br><span class="small">${fmtUTC(t.submittedAt)}</span></td><td>${esc(t.platform)}</td><td class="mono">${fmtDurationFromInput(t.duration)}</td><td>$${state.settings.globalRate}</td><td>${esc(t.account)}</td><td>${esc(t.notes||'—')}</td><td>${esc(t.projectName||'—')}</td><td>${esc(t.reviewNote||'—')}</td><td><span class="badge ${t.status==='reviewed'?'b-green':t.status==='pending'?'b-blue':t.status==='revision'?'b-yellow':'b-red'}">${esc(t.status)}</span></td><td>${editable?`<button class="btn btn-soft" data-action="edit-task" data-id="${t.id}">Edit</button>`:'—'}</td></tr>`;
+    });
+    content+=`</tbody></table></div>`;
+  }
+  $('#app').innerHTML=shell(content,user);
+  bindCommon();
+}
+function renderAdmin(user){
+  const visibleAdminTasks=state.tasks.filter(t=>!isTaskPaid(t));
+  const pending=visibleAdminTasks.filter(t=>t.status==='pending'||t.status==='revision'||t.status==='rejected').length;
+  let content=`<div class="grid grid-4 mb16">${statCard(visibleAdminTasks.length,'Task Logs')}${statCard(state.accounts.length,'Accounts')}${statCard(state.users.length,'Users')}${statCard(state.sessions.filter(s=>s.active).length,'Live Sessions')}</div>`;
+  content+=`<div class="nav"><button class="tab ${state.adminTab==='tasks'?'active':''}" data-admin-tab="tasks">Task Logs</button><button class="tab ${state.adminTab==='billing'?'active':''}" data-admin-tab="billing">Billing</button><button class="tab ${state.adminTab==='accounts'?'active':''}" data-admin-tab="accounts">Accounts</button><button class="tab ${state.adminTab==='users'?'active':''}" data-admin-tab="users">Users</button></div>`;
+  if(state.adminTab==='tasks') content+=adminTasksView();
+  if(state.adminTab==='billing') content+=adminBillingView();
+  if(state.adminTab==='accounts') content+=adminAccountsView();
+  if(state.adminTab==='users') content+=adminUsersView();
+  $('#app').innerHTML=shell(content,user);
+  bindCommon();
+}
+function adminTasksView(){
+  let html=`<div class="card table-wrap"><table class="table"><thead><tr><th>Work Date</th><th>User</th><th>Platform</th><th>Duration</th><th>Account</th><th>Notes</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  const statusPriority={pending:0,revision:1,rejected:2,reviewed:3};
+  const items=state.tasks.filter(t=>!isTaskPaid(t)).sort((a,b)=>{
+    const pa=statusPriority[a.status] ?? 99;
+    const pb=statusPriority[b.status] ?? 99;
+    if(pa!==pb) return pa-pb;
+    return new Date(b.submittedAt)-new Date(a.submittedAt);
+  });
+  if(!items.length) html+=`<tr><td colspan="8" class="empty">No logs</td></tr>`;
+  items.forEach(t=> html+=`<tr><td><strong>${fmtDate(t.workDate)}</strong><br><span class="small">${fmtUTC(t.submittedAt)}</span></td><td>${esc(t.userName)}</td><td>${esc(t.platform)}</td><td class="mono">${fmtDurationFromInput(t.duration)}</td><td>${esc(t.account)}</td><td>${esc(t.notes||'—')}</td><td><span class="badge ${t.status==='reviewed'?'b-green':t.status==='pending'?'b-blue':t.status==='revision'?'b-yellow':'b-red'}">${esc(t.status)}</span></td><td><button class="btn btn-soft" data-action="review-task" data-id="${t.id}">Review</button></td></tr>`);
+  html+=`</tbody></table></div>`; return html;
+}
+function adminBillingView(){
+  const names=['all',...state.users.map(u=>u.name)];
+  const accounts=['all',...state.accounts.map(a=>`Account ${a.number}`)];
+  const f=state.billingFilter||{user:'all',account:'all',from:getWeekBounds(todayUTC()).start,to:getWeekBounds(todayUTC()).end,showPaidArchived:false};
+  if(!('account' in f)) f.account='all';
+  state.billingFilter=f;
+  const userPayRate=Number(state.settings.globalRate||6);
+  const periodTasks=state.tasks.filter(t=>within(t.workDate,f.from,f.to));
+  const filtered=periodTasks.filter(t=>
+    (f.user==='all'||t.userName===f.user) &&
+    (f.account==='all'||t.account===f.account) &&
+    (f.showPaidArchived || !isTaskPaid(t))
+  );
+  const summaryMap={};
+  filtered.forEach(t=>{
+    const u=state.users.find(x=>x.id===t.userId||x.name===t.userName)||{};
+    const key=t.userId||u.id||t.userName;
+    if(!summaryMap[key]) summaryMap[key]={userId:u.id||t.userId||'',userName:t.userName,binanceId:u.binanceId||'',seconds:0,payment:paymentRecordFor(u.id||t.userId||'',f.from,f.to)};
+    summaryMap[key].seconds+=parseDuration(t.duration);
+  });
+  const userSummaries=Object.values(summaryMap).sort((a,b)=>a.userName.localeCompare(b.userName));
+  const byAccount=state.accounts.map(acc=>{
+    const label=`Account ${acc.number}`;
+    const items=filtered.filter(t=>t.account===label);
+    const totalSeconds=items.reduce((s,t)=>s+parseDuration(t.duration),0);
+    const totalHours=totalSeconds/3600;
+    const originalTotal=totalHours*Number(acc.accountRate||0);
+    const userTotal=totalHours*userPayRate;
+    return {acc,label,totalSeconds,totalHours,originalTotal,userTotal,entries:items.length};
+  }).filter(x=>x.entries>0);
+  const dailyRows=[...filtered].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
+  const activeUserLabel = f.user==='all' ? 'All users' : f.user;
+  const activeAccountLabel = f.account==='all' ? 'All accounts' : f.account;
+  const visibleAccountCount = byAccount.length;
+  const visibleUserCount = userSummaries.length;
+  const visibleRowCount = dailyRows.length;
+  let html=`<div class="card p20 mb16"><div class="grid" style="grid-template-columns:repeat(6,minmax(0,1fr))"><div class="field"><label class="label">User</label><select class="select" id="billUser">${names.map(n=>`<option ${f.user===n?'selected':''}>${esc(n)}</option>`).join('')}</select></div><div class="field"><label class="label">Account</label><select class="select" id="billAccount">${accounts.map(n=>`<option ${f.account===n?'selected':''}>${esc(n)}</option>`).join('')}</select></div><div class="field"><label class="label">User rate $/hr</label><input class="input" id="billUserRate" type="number" min="0" step="0.5" value="${userPayRate}"></div><div class="field"><label class="label">From</label><input class="input" id="billFrom" type="date" value="${f.from||''}"></div><div class="field"><label class="label">To</label><input class="input" id="billTo" type="date" value="${f.to||''}"></div><div class="field"><label class="label">Options</label><label class="check-item"><input type="checkbox" id="showPaidArchived" ${f.showPaidArchived?'checked':''}> Show paid archived</label></div></div><div class="row mt16"><button class="btn btn-primary" data-action="apply-billing-filter">Apply</button></div><div class="row mt16" style="gap:10px"><span class="pill-stat">User: ${esc(activeUserLabel)}</span><span class="pill-stat">Account: ${esc(activeAccountLabel)}</span><span class="pill-stat">Users shown: ${visibleUserCount}</span><span class="pill-stat">Accounts shown: ${visibleAccountCount}</span><span class="pill-stat">Rows shown: ${visibleRowCount}</span></div></div>`;
+  html+=`<div class="card p20 mb16"><div class="section-title">Filtered user totals</div><div class="small mb12">The results below follow the user, account, and date filters above.</div><div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Binance ID</th><th>Total hours</th><th>User $</th><th>Payment</th><th>Paid at (UTC)</th></tr></thead><tbody>`;
+  if(!userSummaries.length) html+=`<tr><td colspan="6" class="empty">No users in this period</td></tr>`;
+  userSummaries.forEach(s=>{
+    const paid=!!s.payment;
+    html+=`<tr><td><strong>${esc(s.userName)}</strong></td><td class="mono">${esc(s.binanceId||'—')}</td><td class="mono">${fmtDuration(s.seconds)}</td><td style="color:#1aa551;font-weight:800">$${((s.seconds/3600)*userPayRate).toFixed(2)}</td><td><select class="select payment-select" data-user-id="${esc(s.userId)}" style="min-width:120px"><option value="open" ${paid?'':'selected'}>Open</option><option value="paid" ${paid?'selected':''}>Paid</option></select></td><td class="small">${paid?fmtUTC(s.payment.paidAt):'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  html+=`<div class="card p20 mb16"><div class="section-title">Filtered account totals</div><div class="small mb12">Only the accounts that match the filters are shown here.</div><div class="table-wrap"><table class="table"><thead><tr><th>Account</th><th>Duration</th><th>Hours</th><th>User rate</th><th>User total</th><th>Account rate</th><th>Original total</th></tr></thead><tbody>`;
+  if(!byAccount.length) html+=`<tr><td colspan="7" class="empty">No accounts in this period</td></tr>`;
+  byAccount.forEach(x=>{
+    html+=`<tr><td><strong>${esc(x.label)}</strong></td><td class="mono">${fmtDuration(x.totalSeconds)}</td><td class="mono">${x.totalHours.toFixed(2)}h</td><td>$${userPayRate.toFixed(2)}</td><td style="color:#1aa551;font-weight:800">$${x.userTotal.toFixed(2)}</td><td>$${Number(x.acc.accountRate||0).toFixed(2)}</td><td style="color:#0b6aa9;font-weight:800">$${x.originalTotal.toFixed(2)}</td></tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  html+=`<div class="card p20"><div class="section-title">Daily ordered list</div><div class="small mb12">This list also follows the same filters above.</div><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>User</th><th>Binance ID</th><th>Account</th><th>Duration</th><th>Original</th><th>User $</th><th>Payment</th><th>Notes</th></tr></thead><tbody>`;
+  if(!dailyRows.length) html+=`<tr><td colspan="9" class="empty">No rows in this period</td></tr>`;
+  dailyRows.forEach(t=>{
+    const secs=parseDuration(t.duration); const hrs=secs/3600; const acc=accountByLabel(t.account)||{}; const original=hrs*(acc.accountRate||0); const payRec=paymentRecordFor(t.userId,f.from,f.to); const usr=state.users.find(u=>u.id===t.userId)||{};
+    html+=`<tr><td><strong>${fmtDate(t.workDate)}</strong><br><span class="small">${fmtUTC(t.submittedAt)}</span></td><td>${esc(t.userName)}</td><td class="mono">${esc(usr.binanceId||'—')}</td><td>${esc(t.account)}</td><td class="mono">${fmtDuration(secs)}</td><td style="color:#0b6aa9;font-weight:800">$${original.toFixed(2)}</td><td style="color:#1aa551;font-weight:800">$${(hrs*userPayRate).toFixed(2)}</td><td><select class="select payment-select" data-user-id="${esc(t.userId)}" style="min-width:120px"><option value="open" ${payRec?'':'selected'}>Open</option><option value="paid" ${payRec?'selected':''}>Paid</option></select></td><td>${esc(t.notes||t.projectName||'—')}</td></tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  return html;
+}
+function adminAccountsView(){
+  return `<div class="row mb12"><button class="btn btn-green" data-action="new-account">+ Add Account</button></div><div class="grid grid-3">${state.accounts.map(acc=>{ const used=state.tasks.filter(t=>t.account===`Account ${acc.number}` && t.workDate===todayUTC()).reduce((s,t)=>s+parseDuration(t.duration),0)/3600; return `<div class="card account-card"><div class="account-top"><div><div class="account-name">🖥️ Account ${esc(acc.number)}</div><div class="muted">${esc(acc.project||'No project assigned')}</div></div><span class="badge ${acc.accountStatus==='paused'?'b-yellow':'b-blue'}">${acc.accountStatus==='paused'?'Stopped':'Working'}</span></div><div class="info-box mb12"><div class="kv"><span class="muted">ID:</span><span class="mono">${esc(acc.anydeskId)}</span></div><div class="kv"><span class="muted">🔑:</span><span class="mono">${esc(acc.anydeskPass)}</span></div></div><div class="row mb12"><span class="muted">💰 $${acc.accountRate}/hr</span><span class="muted">🕒 Daily limit ${acc.maxHours}h</span></div><div class="info-box mb12"><div class="kv"><strong>Today limit</strong><span class="mono">${used.toFixed(2)}h / ${(acc.maxHours||10).toFixed(2)}h</span></div><div class="progress"><div class="bar" style="width:${Math.min(100,(used/(acc.maxHours||10))*100)}%"></div></div></div>${acc.adminNotes?`<div class="info-box mb12"><div class="label">Admin Notes</div><div>${esc(acc.adminNotes)}</div></div>`:''}<div class="row"><button class="btn btn-soft" data-action="edit-account" data-id="${acc.id}">Edit</button><button class="btn ${acc.accountStatus==='paused'?'btn-green':'btn-yellow'}" data-action="toggle-account-status" data-id="${acc.id}">${acc.accountStatus==='paused'?'Start':'Stop'}</button><button class="btn btn-red" data-action="delete-account" data-id="${acc.id}">Delete</button></div></div>`;}).join('')}</div>`;
+}
+function adminUsersView(){
+  return `<div class="row mb12"><button class="btn btn-green" data-action="new-user">+ Add User</button></div><div class="card table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Binance ID</th><th>Action</th></tr></thead><tbody>${state.users.map(u=>`<tr><td><strong>${esc(u.name)}</strong></td><td>${esc(u.email)}</td><td class="mono">${esc(u.password)}</td><td class="mono">${esc(u.binanceId||'—')}</td><td><button class="btn btn-soft" data-action="edit-user" data-id="${u.id}">Edit</button></td></tr>`).join('')||`<tr><td colspan="5" class="empty">No users</td></tr>`}</tbody></table></div>`;
+}
+function openModal(title,bodyHtml,onBind){
+  const wrap=document.createElement('div'); wrap.className='modal-bg'; wrap.innerHTML=`<div class="modal"><div class="row mb16"><div class="section-title">${title}</div><button class="btn btn-soft right" id="closeModal">Close</button></div>${bodyHtml}</div>`; document.body.appendChild(wrap); $('#closeModal').onclick=()=>wrap.remove(); wrap.addEventListener('click',e=>{if(e.target===wrap)wrap.remove()}); if(onBind) onBind(wrap);
+}
+function openTaskModal(task,user){
+  const isEdit=!!task; const t=task||{workDate:todayUTC(),platform:'outlier',duration:'',payType:'task',projectName:'',account:'',notes:''};
+  const visible=user.role==='admin'?state.accounts:visibleAccountsFor(user);
+  const parts=durationToParts(t.duration||'');
+  openModal(isEdit?'Edit Task':'Log New Task',`
+    <div class="grid grid-2">
+      <div class="field"><label class="label">Date (UTC)</label><input id="mWorkDate" class="input" type="date" value="${t.workDate||todayUTC()}"></div>
+      <div class="field"><label class="label">Platform</label><input id="mPlatform" class="input" value="${esc(t.platform||'outlier')}"></div>
+      <div class="field" style="grid-column:1/-1"><label class="label">Actual Duration</label><div class="duration-boxes"><div class="mini"><input id="mHours" type="number" min="0" value="${parts.h}"><span>h</span></div><div class="mini"><input id="mMinutes" type="number" min="0" max="59" value="${parts.m}"><span>m</span></div><div class="mini"><input id="mSeconds" type="number" min="0" max="59" value="${parts.s}"><span>s</span></div></div><div class="small mt16" id="durationPreview">Preview: ${fmtDuration(parts.h*3600+parts.m*60+parts.s)}</div></div>
+      <div class="field"><label class="label">Account</label><select id="mAccount" class="select">${visible.map(a=>`<option value="Account ${a.number}" ${(t.account===`Account ${a.number}`)?'selected':''}>Account ${a.number}</option>`).join('')}</select></div>
+      <div class="field"><label class="label">Project</label><input id="mProject" class="input" value="${esc(t.projectName||'')}"></div>
+      <div class="field" style="grid-column:1/-1"><label class="label">Notes</label><input id="mNotes" class="input" value="${esc(t.notes||'')}"></div>
+    </div>
+    <div class="row mt16"><button class="btn btn-primary" id="saveTaskBtn">Save</button></div>
+  `,(wrap)=>{
+    const updatePreview=()=>{ wrap.querySelector('#durationPreview').textContent='Preview: '+partsToDuration(wrap.querySelector('#mHours').value,wrap.querySelector('#mMinutes').value,wrap.querySelector('#mSeconds').value); };
+    ['#mHours','#mMinutes','#mSeconds'].forEach(sel=>wrap.querySelector(sel).addEventListener('input',updatePreview));
+    wrap.querySelector('#saveTaskBtn').onclick=()=>{
+      const duration=partsToDuration(wrap.querySelector('#mHours').value,wrap.querySelector('#mMinutes').value,wrap.querySelector('#mSeconds').value);
+      const payload={
+        workDate:wrap.querySelector('#mWorkDate').value||todayUTC(),
+        platform:wrap.querySelector('#mPlatform').value.trim()||'outlier',
+        duration:duration,
+        payType:'task',
+        projectName:wrap.querySelector('#mProject').value.trim(),
+        account:wrap.querySelector('#mAccount').value,
+        notes:wrap.querySelector('#mNotes').value.trim()
+      };
+      if(parseDuration(duration)<=0||!payload.account) return alert('Duration and account are required');
+      if(isEdit){ Object.assign(task,payload,{status:'pending',reviewNote:''}); }
+      else state.tasks.push(Object.assign({id:uid(),userId:user.id,userName:user.name,status:'pending',reviewNote:'',submittedAt:nowISO()},payload));
+      wrap.remove(); render();
+    };
+  });
+}
+function openReviewModal(task){
+  openModal('Review Task',`<div class="mb16"><strong>${esc(task.userName)}</strong><div class="small">${fmtDate(task.workDate)} · ${fmtUTC(task.submittedAt)}</div><div class="small">${esc(task.account)} · ${esc(task.duration)}</div></div><div class="field mb12"><label class="label">Review Note</label><textarea id="reviewNote" class="textarea">${esc(task.reviewNote||'')}</textarea></div><div class="row"><button class="btn btn-green" data-s="reviewed">Approve</button><button class="btn btn-yellow" data-s="revision">Revision</button><button class="btn btn-red" data-s="rejected">Reject</button></div>`,(wrap)=>{
+    wrap.querySelectorAll('[data-s]').forEach(btn=>btn.onclick=()=>{ task.status=btn.dataset.s; task.reviewNote=wrap.querySelector('#reviewNote').value.trim(); wrap.remove(); render(); });
+  });
+}
+function openAccountModal(account){
+  const isEdit=!!account; const a=account||{number:'',anydeskId:'',anydeskPass:'',project:'',accountRate:10,maxHours:10,assignedName:'',accountStatus:'active',adminNotes:'',visibleToUserIds:[]};
+  openModal(isEdit?'Edit Account':'Add Account',`
+  <div class="grid grid-2">
+    <div class="field"><label class="label">Account Number</label><input id="aNumber" class="input" value="${esc(a.number||'')}"></div>
+    <div class="field"><label class="label">Project</label><input id="aProject" class="input" value="${esc(a.project||'')}"></div>
+    <div class="field"><label class="label">AnyDesk ID</label><input id="aId" class="input" value="${esc(a.anydeskId||'')}"></div>
+    <div class="field"><label class="label">AnyDesk Password</label><input id="aPass" class="input" value="${esc(a.anydeskPass||'')}"></div>
+    <div class="field"><label class="label">Account Rate</label><input id="aRate" class="input" type="number" step="0.5" value="${esc(a.accountRate||0)}"></div>
+    <div class="field"><label class="label">Daily Limit (Hours)</label><input id="aMax" class="input" type="number" step="1" value="${esc(a.maxHours||10)}"></div>
+    <div class="field"><label class="label">Assigned Person</label><select id="aAssigned" class="input"><option value="">Select user...</option>${state.users.map(u=>`<option value="${esc(u.name)}" ${String(a.assignedName||'')===String(u.name)?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>
+    <div class="field"><label class="label">Status</label><select id="aStatus" class="select"><option value="active" ${a.accountStatus!=='paused'?'selected':''}>Working</option><option value="paused" ${a.accountStatus==='paused'?'selected':''}>Stopped</option></select></div>
+  </div>
+  <div class="field mt16"><label class="label">Visible To Users</label><div class="check-grid">${state.users.map(u=>{ const checked=(a.visibleToUserIds||[]).includes(u.id)||(a.visibleToUserNames||[]).includes(u.name)||(a.visibleToUserNames||[]).includes(u.email); return `<label class="check-item"><input type="checkbox" value="${u.id}" data-name="${esc(u.name)}" data-email="${esc(u.email)}" ${checked?'checked':''}> ${esc(u.name)}</label>`; }).join('')}</div><div class="small">Choose only the users who should see this account. If none selected, the account stays hidden from all users.</div></div>
+  <div class="field mt16"><label class="label">Admin Notes</label><textarea id="aNotes" class="textarea">${esc(a.adminNotes||'')}</textarea></div>
+  <div class="row mt16"><button class="btn btn-primary" id="saveAccountBtn">Save</button></div>
+  `,(wrap)=>{
+    wrap.querySelector('#saveAccountBtn').onclick=()=>{
+      const checkedUsers=[...wrap.querySelectorAll('.check-grid input[type="checkbox"]:checked')]; const payload={number:wrap.querySelector('#aNumber').value.trim(),project:wrap.querySelector('#aProject').value.trim(),anydeskId:wrap.querySelector('#aId').value.trim(),anydeskPass:wrap.querySelector('#aPass').value.trim(),accountRate:parseFloat(wrap.querySelector('#aRate').value||0),maxHours:parseInt(wrap.querySelector('#aMax').value||10,10),assignedName:wrap.querySelector('#aAssigned').value.trim(),accountStatus:wrap.querySelector('#aStatus').value,adminNotes:wrap.querySelector('#aNotes').value.trim(),visibleToUserIds:checkedUsers.map(i=>String(i.value)),visibleToUserNames:checkedUsers.map(i=>String(i.dataset.name||'').trim()),visibleToUserEmails:checkedUsers.map(i=>String(i.dataset.email||'').trim())};
+      if(!payload.number||!payload.anydeskId||!payload.anydeskPass) return alert('Account number, id and password are required');
+      if(isEdit) Object.assign(account,payload); else state.accounts.push(Object.assign({id:uid()},payload));
+      wrap.remove(); render();
+    };
+  });
+}
+function openUserModal(user){
+  const isEdit=!!user; const u=user||{name:'',email:'',password:'',binanceId:''};
+  openModal(isEdit?'Edit User':'Add User',`<div class="grid grid-2"><div class="field"><label class="label">Name</label><input id="uName" class="input" value="${esc(u.name||'')}"></div><div class="field"><label class="label">Email</label><input id="uEmail" class="input" value="${esc(u.email||'')}"></div><div class="field"><label class="label">Password</label><input id="uPass" class="input" value="${esc(u.password||'')}"></div><div class="field"><label class="label">Binance ID</label><input id="uBinance" class="input" value="${esc(u.binanceId||'')}"></div></div><div class="row mt16"><button class="btn btn-primary" id="saveUserBtn">Save</button></div>`,(wrap)=>{
+    wrap.querySelector('#saveUserBtn').onclick=()=>{
+      const payload={name:wrap.querySelector('#uName').value.trim(),email:wrap.querySelector('#uEmail').value.trim(),password:wrap.querySelector('#uPass').value.trim(),binanceId:wrap.querySelector('#uBinance').value.trim(),role:'user'};
+      if(!payload.name||!payload.email||!payload.password) return alert('Name, email and password are required');
+      if(isEdit) Object.assign(user,payload); else state.users.push(Object.assign({id:uid()},payload));
+      wrap.remove(); render();
+    };
+  });
+}
+function bindCommon(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.routeTab=b.dataset.tab; render();});
+  document.querySelectorAll('[data-admin-tab]').forEach(b=>b.onclick=()=>{state.adminTab=b.dataset.adminTab; render();});
+  document.querySelector('[data-action="logout"]')?.addEventListener('click',()=>{state.session=null; clearSession(); render();});
+  document.querySelectorAll('[data-action="login-account"]').forEach(b=>b.onclick=()=>{const user=currentUser(); const acc=state.accounts.find(a=>a.id===b.dataset.id); if(!user||!acc) return; if(acc.accountStatus==='paused') return; if(activeSessionFor(acc.id)) return; state.sessions=state.sessions.filter(s=>!(s.userId===user.id&&s.active)); state.sessions.push({id:uid(),accountId:acc.id,userId:user.id,userName:user.name,loginAt:nowISO(),active:true}); render();});
+  document.querySelectorAll('[data-action="logout-account"]').forEach(b=>b.onclick=()=>{state.sessions=state.sessions.map(s=>s.accountId===b.dataset.id&&s.active?Object.assign({},s,{active:false,logoutAt:nowISO()}):s); render();});
+  document.querySelectorAll('[data-action="new-task"]').forEach(b=>{
+    b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); openTaskModal(null,currentUser()); return false; };
+  });
+  document.querySelectorAll('[data-action="edit-task"]').forEach(b=>b.onclick=()=>openTaskModal(state.tasks.find(t=>t.id===b.dataset.id),currentUser()));
+  document.querySelectorAll('[data-action="review-task"]').forEach(b=>b.onclick=()=>openReviewModal(state.tasks.find(t=>t.id===b.dataset.id)));
+  document.querySelectorAll('[data-action="new-account"]').forEach(b=>b.onclick=()=>openAccountModal(null));
+  document.querySelectorAll('[data-action="edit-account"]').forEach(b=>b.onclick=()=>openAccountModal(state.accounts.find(a=>a.id===b.dataset.id)));
+  document.querySelectorAll('[data-action="delete-account"]').forEach(b=>b.onclick=()=>{ if(confirm('Delete account?')){ state.accounts=state.accounts.filter(a=>a.id!==b.dataset.id); state.sessions=state.sessions.filter(s=>s.accountId!==b.dataset.id); render(); }});
+  document.querySelectorAll('[data-action="toggle-account-status"]').forEach(b=>b.onclick=()=>{ const a=state.accounts.find(x=>x.id===b.dataset.id); if(!a) return; a.accountStatus=a.accountStatus==='paused'?'active':'paused'; render(); });
+  document.querySelectorAll('[data-action="new-user"]').forEach(b=>b.onclick=()=>openUserModal(null));
+  document.querySelectorAll('[data-action="edit-user"]').forEach(b=>b.onclick=()=>openUserModal(state.users.find(u=>u.id===b.dataset.id)));
+  document.querySelector('[data-action="apply-billing-filter"]')?.addEventListener('click',()=>{ state.settings.globalRate=Number($('#billUserRate').value||6); state.billingFilter={user:$('#billUser').value,account:$('#billAccount').value,from:$('#billFrom').value,to:$('#billTo').value,showPaidArchived:$('#showPaidArchived').checked}; render(); });
+  document.querySelectorAll('.payment-select').forEach(sel=>sel.addEventListener('change',()=>{ const f=state.billingFilter; const userId=sel.dataset.userId; if(!userId||!f?.from||!f?.to) return; const existing=paymentRecordFor(userId,f.from,f.to); if(sel.value==='paid'){ if(!existing){ const user=state.users.find(u=>u.id===userId)||{}; state.paymentRecords.push({id:uid(),userId:userId,userName:user.name||'',from:f.from,to:f.to,paidAt:nowISO()}); } } else { state.paymentRecords=state.paymentRecords.filter(r=>!(r.userId===userId && r.from===f.from && r.to===f.to)); } render(); }));
+}
+
+// ── تهيئة Firebase وتحميل البيانات ──
+async function initApp() {
+  try {
+    const doc = await STATE_REF.get();
+    if (doc.exists) {
+      const data = doc.data();
+      state.users           = data.users           || seedUsers;
+      state.accounts        = data.accounts        || seedAccounts;
+      state.tasks           = data.tasks           || seedTasks;
+      state.sessions        = data.sessions        || [];
+      state.settings        = data.settings        || state.settings;
+      state.paymentRecords  = data.paymentRecords  || [];
+    } else {
+      // أول مرة تشغيل — احفظ البيانات الأولية
+      await STATE_REF.set({
+        users: state.users,
+        accounts: state.accounts,
+        tasks: state.tasks,
+        sessions: state.sessions,
+        settings: state.settings,
+        paymentRecords: state.paymentRecords
+      });
+    }
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    document.getElementById('app').innerHTML = `
+      <div class="error-screen">
+        <div class="error-box">
+          <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:8px">خطأ في الاتصال بـ Firebase</div>
+          <div style="font-size:14px;color:#6f86a1">تأكد من أنك استبدلت إعدادات Firebase في الكود بإعداداتك الحقيقية</div>
+          <div style="font-size:12px;margin-top:12px;color:#aaa">${e.message}</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  normalizeVisibilityRules();
+
+  // ✅ مستمع real-time — يُحدّث الواجهة فوراً عند أي تغيير من أي مستخدم
+  STATE_REF.onSnapshot({ includeMetadataChanges: true }, (doc) => {
+    // تجاهل التحديثات التي أرسلناها نحن (pending writes)
+    if (doc.metadata.hasPendingWrites) return;
+    if (!doc.exists) return;
+    const data = doc.data();
+    state.users          = data.users          ?? state.users;
+    state.accounts       = data.accounts       ?? state.accounts;
+    state.tasks          = data.tasks          ?? state.tasks;
+    state.sessions       = data.sessions       ?? state.sessions;
+    state.settings       = data.settings       ?? state.settings;
+    state.paymentRecords = data.paymentRecords ?? state.paymentRecords;
+    normalizeVisibilityRules();
+    render();
+  });
+
+  render();
+}
+
+initApp();
+})();
+</script>
+</body>
+</html>
