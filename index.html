@@ -252,7 +252,6 @@ function loginView(err=''){
 function statCard(v,l,cls=''){return `<div class="stat ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`;}
 function render(){
   purgeExpiredPayments();
-  persist();
   const user=currentUser();
   if(!user) return loginView();
   if(user.role==='admin') return renderAdmin(user);
