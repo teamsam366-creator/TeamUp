@@ -114,16 +114,8 @@ const todayUTC=()=> new Date().toISOString().slice(0,10);
 let firebaseUser = null; // يُحدَّث من onAuthStateChanged
 
 const seedUsers=[];
-const seedAccounts=[
-  {id:'acc1',number:'115',anydeskId:'1694677729',anydeskPass:'Pegasus123!!',project:'aether',accountRate:15.5,maxHours:10,assignedName:'Sara',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
-  {id:'acc2',number:'116',anydeskId:'9876543210',anydeskPass:'Dragon99!!',project:'aether',accountRate:17.5,maxHours:12,assignedName:'asmaa',accountStatus:'active',adminNotes:'',visibleToUserIds:[]},
-  {id:'acc3',number:'117',anydeskId:'1122334455',anydeskPass:'Eagle2024!',project:'',accountRate:12,maxHours:10,assignedName:'',accountStatus:'paused',adminNotes:'',visibleToUserIds:[]}
-];
-const seedTasks=[
-  {id:'t1',userId:'u1',userName:'Sara',workDate:'2026-03-25',platform:'outlier',duration:'1h 4m 7s',payType:'task',projectName:'aether',account:'Account 115',notes:'Text-to-Image Head-to-Head Evaluation',status:'reviewed',reviewNote:'',submittedAt:'2026-03-25T09:00:00Z'},
-  {id:'t2',userId:'u1',userName:'Sara',workDate:'2026-03-26',platform:'outlier',duration:'54m 25s',payType:'task',projectName:'aether',account:'Account 115',notes:'Text-to-Image Head-to-Head Evaluation',status:'reviewed',reviewNote:'',submittedAt:'2026-03-26T10:00:00Z'},
-  {id:'t3',userId:'u2',userName:'asmaa',workDate:'2026-03-30',platform:'outlier',duration:'2',payType:'task',projectName:'aether',account:'Account 115',notes:'ايثر',status:'revision',reviewNote:'ارجعي عدليه',submittedAt:'2026-03-30T02:17:00Z'}
-];
+const seedAccounts=[];
+const seedTasks=[];
 
 let state={
   users: seedUsers,
